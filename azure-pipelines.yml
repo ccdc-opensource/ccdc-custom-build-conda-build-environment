@@ -35,14 +35,33 @@ steps:
     #arguments: # Optional
   displayName: 'Create miniconda build environment'
 
-- task: ArchiveFiles@2
+# Upload artifactory build info
+- task: ArtifactoryGenericUpload@2
   inputs:
-    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/output/miniconda3-$(miniconda_installer_version)-$(Build.BuildId)-$(buildosname)'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/miniconda3-$(miniconda_installer_version)-$(Build.BuildId)-$(buildosname).$(outputArchiveExtension)' 
-    archiveType: '$(outputArchiveType)'
+    artifactoryService: 'devops-ccdc-3rd-party'
+    specSource: 'taskConfiguration'
+    fileSpec: |
+      {
+        "files": [
+          {
+            "pattern": "$(Build.ArtifactStagingDirectory)/conda_buildenv*",
+            "target": "ccdc-3rdparty-python-interpreters"
+          }
+        ]
+      }
+    replaceSpecVars: true
+    collectBuildInfo: true
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildNumber)-$(buildosname)'
+    module: 'conda_buildenv/$(buildosname)'
+    includeEnvVars: true
+    failNoOp: true
+  displayName: 'Upload distribution to artifactory'
 
-- task: PublishBuildArtifacts@1
+- task: ArtifactoryPublishBuildInfo@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'miniconda-offline-installer'
-    publishLocation: 'Container'
+    artifactoryService: 'devops-ccdc-3rd-party'
+    buildName: '$(Build.DefinitionName)'
+    buildNumber: '$(Build.BuildNumber)-$(buildosname)'
+    excludeEnvVars: '*password*;*secret*;*key*;*token*'
+  displayName: 'Publish build'
