@@ -1,0 +1,48 @@
+# Build on all three platforms
+strategy:
+  matrix:
+    linux:
+      imageName: 'ubuntu-16.04'
+      buildosname: 'linux'
+      outputArchiveType: 'tar'
+      outputArchiveExtension: 'tar.gz'
+    mac:
+      imageName: 'macos-10.14'
+      buildosname: 'macos'
+      outputArchiveType: 'tar'
+      outputArchiveExtension: 'tar.gz'
+    windows:
+      imageName: 'vs2017-win2016'
+      buildosname: 'windows'
+      outputArchiveType: 'zip'
+      outputArchiveExtension: 'zip'
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.8'
+
+- script: pip install -r requirements.txt
+  displayName: 'Install requirements'
+
+- task: PythonScript@0
+  inputs:
+    scriptSource: 'filePath' # Options: filePath, inline
+    scriptPath: create_build_environment.py
+    #arguments: # Optional
+  displayName: 'Create miniconda build environment'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/output/miniconda3-$(miniconda_installer_version)-$(Build.BuildId)-$(buildosname)'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/miniconda3-$(miniconda_installer_version)-$(Build.BuildId)-$(buildosname).$(outputArchiveExtension)' 
+    archiveType: '$(outputArchiveType)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'miniconda-offline-installer'
+    publishLocation: 'Container'
