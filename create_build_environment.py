@@ -423,7 +423,7 @@ class MinicondaBuildEnvironment:
             subprocess.run(command, check=True, cwd=self.conda_buildenv_destdir())
 
 if __name__ == '__main__':
-    # MinicondaBuildEnvironment().install()
+    MinicondaBuildEnvironment().install()
     MinicondaBuildEnvironment().create_archive()
 
 
