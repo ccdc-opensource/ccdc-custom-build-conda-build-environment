@@ -372,6 +372,9 @@ class MinicondaBuildEnvironment:
                 print('Conda configuration found in %s. This might affect installation of packages' % path)
 
     def install(self):
+        # Set the variable in the azure pipeline
+        print(f"##vso[task.setvariable variable=miniconda_installer_version]{self.miniconda_installer_version()}", flush=True)
+
         print('Cleaning up destination and temporary build directories')
         self.clean_destdir()
         self.prepare_conda_buildenv_versioned_destdir()
