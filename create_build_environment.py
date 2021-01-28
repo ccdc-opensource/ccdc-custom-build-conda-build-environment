@@ -171,6 +171,7 @@ class MinicondaBuildEnvironment:
     def __init__(self):
         self.required_conda_packages = [
             'conda-build',
+            'conda-verify',
             'sphinx',
         ]
         self.extensions = {
