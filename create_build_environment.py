@@ -171,6 +171,7 @@ class MinicondaBuildEnvironment:
     def __init__(self):
         self.required_conda_packages = [
             'conda-build',
+            'conda-verify',
             'sphinx',
         ]
         self.extensions = {
@@ -195,7 +196,7 @@ class MinicondaBuildEnvironment:
 
     # Pass the required miniconda installer version from devops pipelines variables
     def miniconda_installer_version(self):
-        return os.environ.get('MINICONDA_INSTALLER_VERSION', 'py37_4.8.3')
+        return os.environ.get('MINICONDA_INSTALLER_VERSION', 'py37_4.9.2')
 
     # Pass the build id from devops pipelines variables
     # Make sure the resulting artefact is clearly labeled if produced on a developer machine
@@ -372,6 +373,9 @@ class MinicondaBuildEnvironment:
                 print('Conda configuration found in %s. This might affect installation of packages' % path)
 
     def install(self):
+        # Set the variable in the azure pipeline
+        print(f"##vso[task.setvariable variable=miniconda_installer_version]{self.miniconda_installer_version()}", flush=True)
+
         print('Cleaning up destination and temporary build directories')
         self.clean_destdir()
         self.prepare_conda_buildenv_versioned_destdir()
