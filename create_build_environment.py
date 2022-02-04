@@ -196,7 +196,7 @@ class MinicondaBuildEnvironment:
 
     # Pass the required miniconda installer version from devops pipelines variables
     def miniconda_installer_version(self):
-        return os.environ.get('MINICONDA_INSTALLER_VERSION', 'py37_4.9.2')
+        return os.environ.get('MINICONDA_INSTALLER_VERSION', 'py37_4.10.3')
 
     # Pass the build id from devops pipelines variables
     # Make sure the resulting artefact is clearly labeled if produced on a developer machine
