@@ -11,6 +11,13 @@ import tempfile
 import re
 from pathlib import Path
 
+
+MINICONDA_INSTALLER_VERSION = {
+        '3.7': 'py37_4.12.0',
+        '3.9': 'py39_4.12.0',
+        }
+
+
 def macos():
     return sys.platform == 'darwin'
 
@@ -168,7 +175,8 @@ if windows():
 package_name = 'conda_buildenv'
 
 class MinicondaBuildEnvironment:
-    def __init__(self):
+    def __init__(self, python_version):
+        self.python_version = python_version
         self.required_conda_packages = [
             'conda-build',
             'conda-verify',
@@ -196,17 +204,17 @@ class MinicondaBuildEnvironment:
 
     # Pass the required miniconda installer version from devops pipelines variables
     def miniconda_installer_version(self):
-        return os.environ.get('MINICONDA_INSTALLER_VERSION', 'py37_4.9.2')
+        return MINICONDA_INSTALLER_VERSION[self.python_version]
 
     # Pass the build id from devops pipelines variables
     # Make sure the resulting artefact is clearly labeled if produced on a developer machine
     def build_id(self):
-        return os.environ.get('BUILD_BUILDID', 'DEVELOPER_VERSION')
+        return os.environ.get('BUILD_BUILDID', 'DEV')
 
     # Pass the operating system name from devops pipelines variables
     # Make sure the resulting artefact is clearly labeled if produced on a developer machine
     def build_osname(self):
-        return os.environ.get('BUILDOSNAME', 'for_my_developer_os')
+        return os.environ.get('BUILDOSNAME', 'dev_os')
 
     def output_base_name(self):
         components = [
@@ -427,7 +435,12 @@ class MinicondaBuildEnvironment:
             subprocess.run(command, check=True, cwd=self.conda_buildenv_destdir())
 
 if __name__ == '__main__':
-    MinicondaBuildEnvironment().install()
-    MinicondaBuildEnvironment().create_archive()
+    menv37 = MinicondaBuildEnvironment('3.7')
+    menv37.install()
+    menv37.create_archive()
+    menv39 = MinicondaBuildEnvironment('3.9')
+    menv39.install()
+    menv39.create_archive()
+
 
 
