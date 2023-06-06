@@ -2,12 +2,12 @@
 strategy:
   matrix:
     linux:
-      imageName: 'ubuntu-20.04'
+      imageName: 'ubuntu-latest'
       buildosname: 'linux'
       outputArchiveType: 'tar'
       outputArchiveExtension: 'tar.gz'
     mac:
-      imageName: 'macos-10.15'
+      imageName: 'macos-latest'
       buildosname: 'macos'
       outputArchiveType: 'tar'
       outputArchiveExtension: 'tar.gz'
@@ -36,6 +36,19 @@ steps:
   displayName: 'Create miniconda build environment'
 
 # Upload artifactory build info
+- powershell: |
+    $filename = Get-ChildItem -Path $(Build.ArtifactStagingDirectory) -Filter *.tar.gz | Select-Object -ExpandProperty Name
+    Write-Host "Filename: $filename"
+    if ($filename -match "conda_buildenv-(py[0-9]+)_") {
+      $PythonVersion = $Matches[1]
+      Write-Host "Python version: $PythonVersion"
+      Write-Host "##vso[task.setvariable variable=PythonVersion]$PythonVersion"
+    }
+    else {
+      Write-Error "Unable to extract Python version from filename"
+    }
+  displayName: 'Extract Python version and set upload path'
+
 - task: ArtifactoryGenericUpload@2
   inputs:
     artifactoryService: 'devops-ccdc-3rd-party'
@@ -44,8 +57,8 @@ steps:
       {
         "files": [
           {
-            "pattern": "$(Build.ArtifactStagingDirectory)/conda_buildenv*",
-            "target": "ccdc-3rdparty-python-interpreters"
+            "pattern": "$(Build.ArtifactStagingDirectory)/conda_buildenv*.tar.gz",
+            "target": "ccdc-3rdparty-python-interpreters/conda_buildenv/$(PythonVersion)/"
           }
         ]
       }
