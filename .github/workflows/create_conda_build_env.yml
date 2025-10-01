@@ -29,6 +29,8 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - run: pip install -r requirements.txt
+
       - name: Set build env vars
         run: |
           echo "MINICONDA_INSTALLER_VERSION=${{ env.PY_VERSION }}_${{ env.MINICONDA_VERSION }}" >> $GITHUB_ENV
