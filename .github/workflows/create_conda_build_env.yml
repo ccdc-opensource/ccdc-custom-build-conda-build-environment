@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          requirements: ./requirements.txt
 
       - name: Set build env vars
         run: |
