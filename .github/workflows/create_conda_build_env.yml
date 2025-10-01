@@ -58,12 +58,12 @@ jobs:
             "${{ env.PACKAGE_FILENAME }}" \
             "ccdc-3rdparty-python-interpreters/conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
 
-      - name: Upload installer to ProGet
-        if: github.event_name != 'pull_request'
-        uses: ccdc-confidential/github-actions/upload-proget@v6
-        with:
-          feed: ccdc-3rdparty-python-interpreters
-          token: ${{ secrets.PROGET_TOKEN }}
-          file: "${{ env.PACKAGE_FILENAME }}"
-          target-path: "conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
-          flat: true
+            #      - name: Upload installer to ProGet
+            #        if: github.event_name != 'pull_request'
+            #        uses: ccdc-confidential/github-actions/upload-proget@v6
+            #        with:
+            #          feed: ccdc-3rdparty-python-interpreters
+            #          token: ${{ secrets.PROGET_TOKEN }}
+            #          file: "${{ env.PACKAGE_FILENAME }}"
+            #          target-path: "conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
+            #          flat: true
