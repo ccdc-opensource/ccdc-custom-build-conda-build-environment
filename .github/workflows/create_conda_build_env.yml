@@ -51,6 +51,11 @@ jobs:
         run: |
           echo "PACKAGE_FILENAME=conda_buildenv-${{ env.PY_VERSION }}_*-{{ env.BUILD_BUILDID }}-{{ env.BUILDOSNAME }}.tar.gz" >> $GITHUB_ENV
 
+      - name: Set up JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_ENV_1: ${{ secrets.ARTIFACTORY_GH_CCDC_3RDPARTY_PYTHON_INTERPRETERS_READ_WRITE }}
+
       - name: Upload installer to Artifactory
         if: github.event_name != 'pull_request'
         shell: bash
