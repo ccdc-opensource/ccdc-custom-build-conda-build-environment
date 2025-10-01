@@ -32,15 +32,16 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Set build env vars
+        shell: bash
         run: |
           echo "MINICONDA_INSTALLER_VERSION=${{ env.PY_VERSION }}_${{ env.MINICONDA_VERSION }}" >> $GITHUB_ENV
           echo "BUILD_BUILDID=${{ github.run_id }}" >> $GITHUB_ENV
-          if [[ "${{ matrix.os }}" == "windows"* ]]; then
-            echo "BUILDOSNAME=windows" >> $GITHUB_ENV
-          elif [[ "${{ matrix.os }}" == "macos"* ]]; then
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            echo "BUILDOSNAME=linux" >> $GITHUB_ENV
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
             echo "BUILDOSNAME=macos" >> $GITHUB_ENV
           else
-            echo "BUILDOSNAME=linux" >> $GITHUB_ENV
+            echo "BUILDOSNAME=windows" >> $GITHUB_ENV
           fi
 
       - name: Run the script to create conda build env
