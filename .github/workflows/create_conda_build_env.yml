@@ -1,0 +1,77 @@
+name: Create conda pack
+on:  # yamllint disable-line rule:truthy
+  push:
+    files:
+      - '.github/workflows/create_conda_build_env.yml'
+
+env:
+  PYTHON_VERSION: 3.11
+  PY_VERSION: py311
+  MINICONDA_VERSION: 25.7.0-2
+
+jobs:
+  build-conda-pack:
+    name: Build conda build env
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macos-13
+          - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pip install -r requirements.txt
+
+      - name: Set build env vars
+        shell: bash
+        run: |
+          echo "MINICONDA_INSTALLER_VERSION=${{ env.PY_VERSION }}_${{ env.MINICONDA_VERSION }}" >> $GITHUB_ENV
+          echo "BUILD_BUILDID=${{ github.run_id }}" >> $GITHUB_ENV
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            echo "BUILDOSNAME=linux" >> $GITHUB_ENV
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "BUILDOSNAME=macos" >> $GITHUB_ENV
+          else
+            echo "BUILDOSNAME=windows" >> $GITHUB_ENV
+          fi
+
+      - name: Run the script to create conda build env
+        run: |
+          python ./create_build_environment.py
+
+      - name: Set package filename
+        run: |
+          echo "PACKAGE_FILENAME=conda_buildenv-${{ env.PY_VERSION }}_*-{{ env.BUILD_BUILDID }}-{{ env.BUILDOSNAME }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Set up JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_ENV_1: ${{ secrets.ARTIFACTORY_GH_CCDC_3RDPARTY_PYTHON_INTERPRETERS_READ_WRITE }}
+
+      - name: Upload installer to Artifactory
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          jf c use gh-ccdc-3rdparty-python-interpreters-read-write
+          jfrog rt upload --flat \
+            "${{ env.PACKAGE_FILENAME }}" \
+            "ccdc-3rdparty-python-interpreters/conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
+
+            #      - name: Upload installer to ProGet
+            #        if: github.event_name != 'pull_request'
+            #        uses: ccdc-confidential/github-actions/upload-proget@v6
+            #        with:
+            #          feed: ccdc-3rdparty-python-interpreters
+            #          token: ${{ secrets.PROGET_TOKEN }}
+            #          file: "${{ env.PACKAGE_FILENAME }}"
+            #          target-path: "conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
+            #          flat: true
