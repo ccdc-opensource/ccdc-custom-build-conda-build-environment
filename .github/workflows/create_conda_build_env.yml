@@ -56,9 +56,9 @@ jobs:
         if: github.event_name != 'pull_request'
         shell: bash
         env:
-          PROGET_API_KEY: ${{ secrets.PROGET_API_KEY }}
+          PROGET_API_KEY: ${{ secrets.PROGET_CCDC_3RDPARTY_PYTHON_INTERPRETERS_READ_WRITE }}
           PROGET_BASE_URL: https://proget.ccdc.cam.ac.uk
-          PROGET_ASSET_DIRECTORY: gh-ccdc-3rdparty-python-interpreters-read-write
+          PROGET_ASSET_DIRECTORY: ccdc-3rdparty-python-interpreters
         run: |
           PROGET_ENDPOINT="${PROGET_BASE_URL}/endpoints/${PROGET_ASSET_DIRECTORY}/content/conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
 
