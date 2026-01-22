@@ -22,7 +22,7 @@ jobs:
           - ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -52,26 +52,26 @@ jobs:
         run: |
           echo "PACKAGE_FILENAME=conda_buildenv-${{ env.PY_VERSION }}_*-{{ env.BUILD_BUILDID }}-{{ env.BUILDOSNAME }}.tar.gz" >> $GITHUB_ENV
 
-      - name: Set up JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v4
-        env:
-          JF_ENV_1: ${{ secrets.ARTIFACTORY_GH_CCDC_3RDPARTY_PYTHON_INTERPRETERS_READ_WRITE }}
-
-      - name: Upload installer to Artifactory
+      - name: Upload installer to ProGet
         if: github.event_name != 'pull_request'
         shell: bash
+        env:
+          PROGET_API_KEY: ${{ secrets.PROGET_API_KEY }}
+          PROGET_BASE_URL: https://proget.ccdc.cam.ac.uk
+          PROGET_ASSET_DIRECTORY: gh-ccdc-3rdparty-python-interpreters-read-write
         run: |
-          jf c use gh-ccdc-3rdparty-python-interpreters-read-write
-          jfrog rt upload --flat \
-            "${{ env.PACKAGE_FILENAME }}" \
-            "ccdc-3rdparty-python-interpreters/conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
+          PROGET_ENDPOINT="${PROGET_BASE_URL}/endpoints/${PROGET_ASSET_DIRECTORY}/content/conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
 
-            #      - name: Upload installer to ProGet
-            #        if: github.event_name != 'pull_request'
-            #        uses: ccdc-confidential/github-actions/upload-proget@v6
-            #        with:
-            #          feed: ccdc-3rdparty-python-interpreters
-            #          token: ${{ secrets.PROGET_TOKEN }}
-            #          file: "${{ env.PACKAGE_FILENAME }}"
-            #          target-path: "conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
-            #          flat: true
+          curl -X POST \
+            -H "Content-Type: application/octet-stream" \
+            -H "X-ApiKey: ${PROGET_API_KEY}" \
+            --data-binary "@${{ env.archive_path }}/${{ env.archive_filename }}" \
+            --fail-with-body \
+            "$PROGET_ENDPOINT"
+
+          if [ $? -eq 0 ]; then
+            echo "Successfully uploaded ${{ env.archive_filename }} to ProGet"
+          else
+            echo "Failed to upload ${{ env.archive_filename }} to ProGet"
+            exit 1
+          fi
