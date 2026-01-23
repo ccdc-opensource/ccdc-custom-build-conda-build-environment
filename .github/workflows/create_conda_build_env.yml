@@ -48,9 +48,13 @@ jobs:
         run: |
           python ./create_build_environment.py
 
-      - name: Set package filename
+      - name: Set archive variables
+        shell: bash
         run: |
-          echo "PACKAGE_FILENAME=conda_buildenv-${{ env.PY_VERSION }}_*-{{ env.BUILD_BUILDID }}-{{ env.BUILDOSNAME }}.tar.gz" >> $GITHUB_ENV
+          echo "ARCHIVE_PATH=build_temp" >> $GITHUB_ENV
+          ARCHIVE_FILE=$(ls build_temp/conda_buildenv-*.tar.gz)
+          echo "ARCHIVE_FILENAME=$(basename $ARCHIVE_FILE)" >> $GITHUB_ENV
+          echo "Found archive: $ARCHIVE_FILE"
 
       - name: Upload installer to ProGet
         if: github.event_name != 'pull_request'
@@ -60,18 +64,18 @@ jobs:
           PROGET_BASE_URL: https://proget.ccdc.cam.ac.uk
           PROGET_ASSET_DIRECTORY: ccdc-3rdparty-python-interpreters
         run: |
-          PROGET_ENDPOINT="${PROGET_BASE_URL}/endpoints/${PROGET_ASSET_DIRECTORY}/content/conda_buildenv/${{ env.PY_VERSION }}/${{ env.PACKAGE_FILENAME }}"
+          PROGET_ENDPOINT="${PROGET_BASE_URL}/endpoints/${PROGET_ASSET_DIRECTORY}/content/conda_buildenv/${{ env.PY_VERSION }}/${{ env.ARCHIVE_FILENAME }}"
 
           curl -X POST \
             -H "Content-Type: application/octet-stream" \
             -H "X-ApiKey: ${PROGET_API_KEY}" \
-            --data-binary "@${{ env.archive_path }}/${{ env.archive_filename }}" \
+            --data-binary "@${{ env.ARCHIVE_PATH }}/${{ env.ARCHIVE_FILENAME }}" \
             --fail-with-body \
             "$PROGET_ENDPOINT"
 
           if [ $? -eq 0 ]; then
-            echo "Successfully uploaded ${{ env.archive_filename }} to ProGet"
+            echo "Successfully uploaded ${{ env.ARCHIVE_FILENAME }} to ProGet"
           else
-            echo "Failed to upload ${{ env.archive_filename }} to ProGet"
+            echo "Failed to upload ${{ env.ARCHIVE_FILENAME }} to ProGet"
             exit 1
           fi
