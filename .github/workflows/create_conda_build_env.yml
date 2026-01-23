@@ -1,0 +1,76 @@
+name: Create conda pack
+on:  # yamllint disable-line rule:truthy
+  push:
+    paths:
+      - '.github/workflows/create_conda_build_env.yml'
+
+env:
+  PYTHON_VERSION: 3.11
+  PY_VERSION: py311
+  MINICONDA_VERSION: 25.7.0-2
+
+jobs:
+  build-conda-pack:
+    name: Build conda build env
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macos-latest
+          - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pip install -r requirements.txt
+
+      - name: Set build env vars
+        shell: bash
+        run: |
+          echo "MINICONDA_INSTALLER_VERSION=${{ env.PY_VERSION }}_${{ env.MINICONDA_VERSION }}" >> $GITHUB_ENV
+          echo "BUILD_BUILDID=${{ github.run_id }}" >> $GITHUB_ENV
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            echo "BUILDOSNAME=linux" >> $GITHUB_ENV
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            echo "BUILDOSNAME=macos" >> $GITHUB_ENV
+          else
+            echo "BUILDOSNAME=windows" >> $GITHUB_ENV
+          fi
+
+      - name: Run the script to create conda build env
+        run: |
+          python ./create_build_environment.py
+
+      - name: Set archive variables
+        shell: bash
+        run: |
+          echo "ARCHIVE_PATH=build_temp" >> $GITHUB_ENV
+          ARCHIVE_FILE=$(ls build_temp/conda_buildenv-*.tar.gz)
+          echo "ARCHIVE_FILENAME=$(basename $ARCHIVE_FILE)" >> $GITHUB_ENV
+          echo "Found archive: $ARCHIVE_FILE"
+
+      - name: Upload installer to ProGet
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          PROGET_API_KEY: ${{ secrets.PROGET_CCDC_3RDPARTY_PYTHON_INTERPRETERS_READ_WRITE }}
+          PROGET_BASE_URL: https://proget.ccdc.cam.ac.uk
+          PROGET_ASSET_DIRECTORY: ccdc-3rdparty-python-interpreters
+        run: |
+          PROGET_ENDPOINT="${PROGET_BASE_URL}/endpoints/${PROGET_ASSET_DIRECTORY}/content/conda_buildenv/${{ env.PY_VERSION }}/${{ env.ARCHIVE_FILENAME }}"
+
+          curl -X POST \
+            -H "Content-Type: application/octet-stream" \
+            -H "X-ApiKey: ${PROGET_API_KEY}" \
+            --data-binary "@${{ env.ARCHIVE_PATH }}/${{ env.ARCHIVE_FILENAME }}" \
+            --fail-with-body \
+            "$PROGET_ENDPOINT"
+
+          echo "Successfully uploaded ${{ env.ARCHIVE_FILENAME }} to ProGet"
