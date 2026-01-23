@@ -1,7 +1,7 @@
 name: Create conda pack
 on:  # yamllint disable-line rule:truthy
   push:
-    files:
+    paths:
       - '.github/workflows/create_conda_build_env.yml'
 
 env:
@@ -73,9 +73,4 @@ jobs:
             --fail-with-body \
             "$PROGET_ENDPOINT"
 
-          if [ $? -eq 0 ]; then
-            echo "Successfully uploaded ${{ env.ARCHIVE_FILENAME }} to ProGet"
-          else
-            echo "Failed to upload ${{ env.ARCHIVE_FILENAME }} to ProGet"
-            exit 1
-          fi
+          echo "Successfully uploaded ${{ env.ARCHIVE_FILENAME }} to ProGet"
