@@ -185,7 +185,9 @@ class MinicondaBuildEnvironment:
             'Darwin': 'MacOSX'
         }
         self.architectures = {
-            '64bit': 'x86_64'
+            'Windows': 'x86_64',
+            'Linux': 'x86_64',
+            'Darwin': 'arm64'
         }
         self.system = platform.system()
         self.conda_python_version = '3'
@@ -248,12 +250,13 @@ class MinicondaBuildEnvironment:
     @property
     def installer_name(self):
         # (Ana|Mini)conda-<VERSION>-<PLATFORM>-<ARCHITECTURE>.<EXTENSION>
+        # Miniconda3-py311_26.1.1-1-MacOSX-arm64.sh
         return '{0}{1}-{2}-{3}-{4}.{5}'.format(
             self.distribution,
             self.conda_python_version,
             self.miniconda_installer_version(),
             self.platforms[self.system],
-            self.architectures[self.bitness],
+            self.architectures[self.system],
             self.extensions[self.system])
 
     def fetch_miniconda_installer(self):
