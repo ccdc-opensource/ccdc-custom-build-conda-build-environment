@@ -1,8 +1,9 @@
-name: Create conda pack
+name: Create conda build environment
 on:  # yamllint disable-line rule:truthy
   push:
     paths:
       - '.github/workflows/create_conda_build_env.yml'
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: 3.11
